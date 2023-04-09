@@ -5,6 +5,9 @@
 
 > Warning!: Different flags may appear due to countries using the same code which is given. e.g. country code of Canada and USA is 1.
 
+####Example Screenshot
+![Screenshot](screenshot.png)
+
 ### Usage
 
 ```html
