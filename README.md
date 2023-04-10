@@ -1,17 +1,19 @@
 # phoneInput
 
-* Country list taken from https://countrycode.org/, there may be discrepancies or omissions, data accuracy has not been tested.
-* Country flag sprite taken from https://flag-sprites.com/, there may be discrepancies or omissions, data accuracy has not been tested.
+Simple way to modify and check phone number input.
 
 > Warning!: Different flags may appear due to countries using the same code which is given. e.g. country code of Canada and USA is 1.
 
-####Example Screenshot
-![Screenshot](screenshot.png)
+* Country list taken from https://countrycode.org/, there may be discrepancies or omissions, data accuracy has not been tested.
+* Country flag sprite taken from https://flag-sprites.com/, there may be discrepancies or omissions, data accuracy has not been tested.
+
+#### Example Screenshot
+
+![Screenshot](screenshot.PNG)
 
 ### Usage
 
 ```html
-
 <link rel="stylesheet" href="assets/phone-input-ui.min.css">
 <link rel="stylesheet" href="assets/flags.css">
 ```
@@ -20,7 +22,9 @@
 <!-- This usage generates country code and list parts automatically -->
 <input type="tel" name="mobile-number" id="mobile-number" required>
 ```
+
 or if you want to show specific number and code from your data;
+
 ```html
 <!-- Country code id should be input id + _country_code -->
 <input type="tel" name="mobile-number" id="mobile-number" value="(111) 111 1111" required>
