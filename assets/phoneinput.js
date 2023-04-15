@@ -1,7 +1,10 @@
 class PhoneInput {
     constructor(inpudID, options = {}) {
         this.input = document.getElementById(inpudID);
+        this.inputFirstValue = this.input.value;
         this.container = null;
+
+        this.hiddenISOInput = null;
 
         this.countryCodeContainer = null;
         this.countryCodeInput = null;
@@ -11,8 +14,8 @@ class PhoneInput {
         this.searchInput = null;
 
         this.defaultCountry = options.defaultCountry || 'TR'
-        this.plusSign = options.plusSign || false;
-        this.autoComplete = options.autoComplete || false;
+        this.plusSign = !!options.plusSign;
+        this.autoComplete = !!options.autoComplete;
         this.customMessage = options.customMessage || 'Please enter your phone number correctly.'
 
         this.defaultCode = countries[this.defaultCountry].code;
@@ -90,6 +93,25 @@ class PhoneInput {
         this.countryCodeFlag = this.countryCodeContainer.getElementsByClassName("fg flag")[0];
     }
 
+    createHiddenISOInput() {
+        // country iso input's name is given input name + _iso
+        let countryISOInput = this.input.id + '_iso';
+        this.createHiddenISOPart(countryISOInput);
+    }
+
+    createHiddenISOWithoutInput(hiddenISOInput) {
+        this.hiddenISOInput = hiddenISOInput;
+        this.hiddenISOInput.classList.add("country__iso__input");
+        this.container.appendChild(this.hiddenISOInput);
+    }
+
+    createHiddenISOPart(countryISOInput) {
+        let newDiv = document.createElement('div');
+        newDiv.innerHTML = HiddenISOTemplate(countryISOInput);
+        this.container.appendChild(newDiv.firstElementChild);
+        this.hiddenISOInput = this.container.getElementsByClassName("country__iso__input")[0];
+    }
+
     createCountryListTemplate() {
         let newDiv = document.createElement('div');
         newDiv.innerHTML = CountryListTemplate();
@@ -105,7 +127,7 @@ class PhoneInput {
         Object.entries(countries).forEach(entry => {
             const [key, country] = entry;
             let newDiv = document.createElement('div');
-            newDiv.innerHTML = CountryListItemTemplate(plusSign, country.flag, country.name, country.code, key);
+            newDiv.innerHTML = CountryListItemTemplate(plusSign, country.flag, country.name, country.code);
             newDiv.firstElementChild.addEventListener("click", (event) => {
                 this.setCountry(key);
             })
@@ -113,13 +135,13 @@ class PhoneInput {
         });
     }
 
-    blockNonDigitChars() {
-        let regex = new RegExp("^[0-9]+$");
-        var key = String.fromCharCode(!event.charCode ? event.which : event.charCode);
+    blockNonDigitChars(event) {
+        const allowedKeys = ['Backspace', 'Delete'];
+        const allowedInput = /[0-9]/g;
+        const inputValue = event.key;
 
-        if (!regex.test(key) && event.keyCode !== 13) {
+        if (!allowedKeys.includes(inputValue) && !inputValue.match(allowedInput)) {
             event.preventDefault();
-            return false;
         }
     }
 
@@ -153,43 +175,56 @@ class PhoneInput {
     }
 
     changeCountryByCountryCode() {
-        Object.entries(countries).forEach(entry => {
-            const [key, country] = entry;
+        for (const [key, country] of Object.entries(countries)) {
             if (country.code === this.countryCodeInput.value) {
                 this.setCountry(key);
-                return false;
+                return true;
             }
-        });
+        }
+        return false;
     }
 
     setCountry(ISO) {
-        this.currentCountry = countries[ISO];
-        this.currentFormat = this.currentCountry.format;
-        this.input.value = "";
-        this.countryCodeInput.value = this.plusSign ? '+' + this.currentCountry.code : this.currentCountry.code;
-        this.countryCodeFlag.className = "fg flag " + this.currentCountry.flag;
+        if (countries[ISO]) {
+            this.currentCountry = countries[ISO];
+            this.currentFormat = this.currentCountry.format;
+            this.input.value = "";
+            this.countryCodeInput.value = this.plusSign ? '+' + this.currentCountry.code : this.currentCountry.code;
+            this.hiddenISOInput.value = ISO;
+            this.countryCodeFlag.className = "fg flag " + this.currentCountry.flag;
+            return true;
+        }
+        return false;
     }
 
     bindEvents() {
         this.createInputContainer();
         let countryCodeInput = document.getElementById(this.input.id + '_country_code');
-        if (countryCodeInput) {
-            this.createCountryCodeWithoutInput(countryCodeInput);
-            this.changeCountryByCountryCode();
-        } else
-            this.createCountryCodeInput();
+        countryCodeInput ? this.createCountryCodeWithoutInput(countryCodeInput) : this.createCountryCodeInput();
+        let countryHiddenISO = document.getElementById(this.input.id + '_iso');
+        countryHiddenISO ? this.createHiddenISOWithoutInput(countryHiddenISO) : this.createHiddenISOInput();
+        this.setCountry(this.hiddenISOInput.value) || this.changeCountryByCountryCode() || this.setCountry('JA');
+
+        this.input.value = this.inputFirstValue;
         this.createCountryListTemplate();
         this.createCountryListItems();
         this.countryCodeInput.readOnly = true;
         this.countryCodeInput.addEventListener('focus', () => {
             this.countryCodeInput.readOnly = true;
         });
+        this.hiddenISOInput.readOnly = true;
+        this.hiddenISOInput.addEventListener('focus', () => {
+            this.hiddenISOInput.readOnly = true;
+        });
 
         this.container.appendChild(this.input);
         this.closeCountryLists();
 
-        this.input.addEventListener("keypress", (event) => {
-            this.blockNonDigitChars()
+        this.input.addEventListener('paste', function (event) {
+            event.preventDefault();
+        });
+        this.input.addEventListener("keydown", (event) => {
+            this.blockNonDigitChars(event)
         });
         this.input.addEventListener("keypress", (event) => {
             if (/\d/.test(event.key))
@@ -223,14 +258,17 @@ class PhoneInput {
         if (this.autoComplete === true) {
             this.input.setAttribute('autocomplete', 'on');
             this.countryCodeInput.setAttribute('autocomplete', 'on');
+            this.hiddenISOInput.setAttribute('autocomplete', 'on');
             this.searchInput.setAttribute('autocomplete', 'on');
         } else {
             this.input.setAttribute('autocomplete', 'off');
             this.countryCodeInput.setAttribute('autocomplete', 'off');
+            this.hiddenISOInput.setAttribute('autocomplete', 'off');
             this.searchInput.setAttribute('autocomplete', 'off');
         }
     }
 }
+
 
 const CountryCodeWithoutInput = (default_flag) => `
         <div class="country__code">
@@ -247,13 +285,16 @@ const CountryCodeTemplate = (plus_sign, input_name, default_code, default_flag) 
             <input type="text" class="country__code__input" name="${input_name}" id="${input_name}" readonly value="${plus_sign}${default_code}">
         </div>
 `;
+const HiddenISOTemplate = (input_name) => `
+    <input type="text" class="country__iso__input" name="${input_name}" id="${input_name}">
+`;
 const CountryListTemplate = () => `
         <ul class="country__list">
         <li class="country__search__container"><input class="search__on__list"></li>
         </ul>
 `;
-const CountryListItemTemplate = (plus_sign, flag, name, code, iso) => `
-            <li class="country__list__item" data-iso-code="${iso}" data-country-code="${plus_sign}${code}" data-country-flag="${flag}">
+const CountryListItemTemplate = (plus_sign, flag, name, code) => `
+            <li class="country__list__item"">
                 <div class="flag ${flag}"></div>
                 <div class="country-name">${name}</div>
                 <div class="country-code">${plus_sign}${code}</div>

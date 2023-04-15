@@ -27,6 +27,16 @@
     cursor: pointer;
 }
 
+.country__iso__input {
+    position: absolute;
+    visibility: hidden;
+    padding: 0;
+    margin: 0;
+    height: 0;
+    width: 0;
+    z-index: -99;
+}
+
 .countries__dropdown {
     min-height: 100%;
     position: absolute;
