@@ -159,7 +159,7 @@ class PhoneInput {
 
     searchOnCountryList(elem) {
         if (elem) {
-            let searchText = elem.value;
+            let searchText = elem.value.toLowerCase();
             let items = this.countryListContainer.getElementsByClassName("country__list__item");
             items = Array.from(items);
             items.forEach(item => {
